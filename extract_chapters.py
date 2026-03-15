@@ -1,12 +1,18 @@
 import ebooklib
 from ebooklib import epub
 from bs4 import BeautifulSoup
+from InquirerPy import inquirer
+import json
+import os
 
 def extract_chapters(epub_path):
+    if not os.path.exists(epub_path):
+        print(f"Error: File {epub_path} not found. Aborting...")
+        return []
+
     book = epub.read_epub(epub_path)
     chapters = []
 
-    
     for item in book.get_items():
         
         if item.get_type() == ebooklib.ITEM_DOCUMENT:
@@ -16,9 +22,9 @@ def extract_chapters(epub_path):
             title = soup.find(['h1', 'h2', 'h3'])
             chapter_title = title.get_text().strip() if title else item.get_name()
             
-            text_content = soup.get_text(separator=' ')
+            text_content = soup.get_text(separator=' ').strip()
             
-            if len(text_content.strip()) > 100: 
+            if len(text_content.strip()) > 50: 
                 chapters.append({
                     'title': chapter_title,
                     'content': text_content.strip()
@@ -26,12 +32,56 @@ def extract_chapters(epub_path):
     
     return chapters
 
-chapters = extract_chapters("./test_books/darkage.epub")
 
-for i, ch in enumerate(chapters):
-    print(f"Kapitel {i+1}: {ch['title']} ({len(ch["content"])}) Zeichen)")
+def console_selection(chapter_list):
+    if not chapter_list:
+        print("No Chapters found to choose from. Aborting...")
+        return []
 
-# Beispielaufruf
-# chapters = extract_chapters('mein_buch.epub')
-# for i, ch in enumerate(chapters):
-#     print(f"Kapitel {i+1}: {ch['title']} ({len(ch['content'])} Zeichen)")
+    choices = [ch['title'] for ch in chapter_list]
+    
+    selected_titles = inquirer.checkbox(
+        message="Choose chapters to export (Space to check, Enter to apply):",
+        choices=choices,
+        pointer="👉",
+        enabled_symbol="✅",
+        disabled_symbol="⬜"
+    ).execute()
+
+    final_output = []
+    for title in selected_titles:
+        for ch in chapter_list:
+            if ch['title'] == title:
+                final_output.append({
+                    "chapter_title": ch['title'],
+                    "chapter_text": ch['content']
+                })
+                break 
+
+    return final_output
+
+def save_to_json(data, filename):
+    if not data:
+        print("Nothing selected. Aborting...")
+        return
+
+    with open(filename, 'w', encoding='utf-8') as f:
+        json.dump(data, f, indent=4, ensure_ascii=False)
+
+    print(f"\n--- SUCCESS ---")
+    print(f"Successfully saved {len(data)} chapters to '{filename}'.")
+
+
+if __name__ == "__main__":
+
+    # Extract chapters
+    path_to_epub = "./test_books/darkage.epub"
+    print(f"Reading Book: {path_to_epub}...")
+    all_chapters = extract_chapters(path_to_epub)
+
+    # Choosing Chapters
+    selected_data = console_selection(all_chapters)
+
+    output_dir = "./output/"
+    # 3. Export to JSON
+    save_to_json(selected_data, f"{output_dir}export.json")
