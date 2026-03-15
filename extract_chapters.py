@@ -26,7 +26,7 @@ def extract_chapters(epub_path):
     
     return chapters
 
-chapters = extract_chapters("darkage.epub")
+chapters = extract_chapters("./test_books/darkage.epub")
 
 for i, ch in enumerate(chapters):
     print(f"Kapitel {i+1}: {ch['title']} ({len(ch["content"])}) Zeichen)")
