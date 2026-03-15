@@ -5,6 +5,8 @@ from InquirerPy import inquirer
 import json
 import os
 
+BOOK_PATH="./books/darkage.epub"
+
 def extract_chapters(epub_path):
     if not os.path.exists(epub_path):
         print(f"Error: File {epub_path} not found. Aborting...")
@@ -75,9 +77,8 @@ def save_to_json(data, filename):
 if __name__ == "__main__":
 
     # Extract chapters
-    path_to_epub = "./test_books/darkage.epub"
-    print(f"Reading Book: {path_to_epub}...")
-    all_chapters = extract_chapters(path_to_epub)
+    print(f"Reading Book: {BOOK_PATH}...")
+    all_chapters = extract_chapters(BOOK_PATH)
 
     # Choosing Chapters
     selected_data = console_selection(all_chapters)
